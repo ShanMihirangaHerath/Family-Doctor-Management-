@@ -31,9 +31,6 @@ public class Staff {
     @Column(unique = true)
     private String qrCodeString;
 
-    private Double assignedLatitude;
-    private Double assignedLongitude;
-
     @Column(updatable = false)
     private LocalDateTime createdAt;
 
