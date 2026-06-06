@@ -1,5 +1,6 @@
 package com.fd.management.backend.controller;
 
+import com.fd.management.backend.dto.StaffRequest;
 import com.fd.management.backend.entity.Staff;
 import com.fd.management.backend.service.StaffService;
 import lombok.RequiredArgsConstructor;
@@ -7,7 +8,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-
 import java.util.Map;
 
 @RestController
@@ -17,10 +17,14 @@ import java.util.Map;
 public class StaffController {
 
     private final StaffService staffService;
+
     @PostMapping("/add")
-    public ResponseEntity<Staff> addStaff(@RequestBody Staff staff) {
-        Staff savedStaff = staffService.addStaff(staff);
-        return ResponseEntity.ok(savedStaff);
+    public ResponseEntity<?> addStaff(@RequestBody StaffRequest request) {
+        try {
+            return ResponseEntity.ok(staffService.addStaff(request));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Failed to add staff: " + e.getMessage());
+        }
     }
 
     @GetMapping("/all")
@@ -36,5 +40,4 @@ public class StaffController {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
-
 }

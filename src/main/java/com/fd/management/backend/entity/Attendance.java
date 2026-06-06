@@ -36,4 +36,7 @@ public class Attendance {
     private boolean isGeofenceUsed;
 
     private String status;
+
+    @Column(name = "approval_status")
+    private String approvalStatus = "PENDING";
 }
