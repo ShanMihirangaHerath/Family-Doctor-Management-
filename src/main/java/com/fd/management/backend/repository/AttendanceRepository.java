@@ -10,4 +10,6 @@ import java.util.List;
 public interface AttendanceRepository extends JpaRepository<Attendance, Long> {
 
     List<Attendance> findByStaffId(Long staffId);
+
+    List<Attendance> findByStaffIdOrderByCheckInTimeDesc(Long staffId);
 }
