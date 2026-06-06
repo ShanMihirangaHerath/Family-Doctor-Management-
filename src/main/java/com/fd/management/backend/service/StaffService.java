@@ -1,5 +1,6 @@
 package com.fd.management.backend.service;
 
+import com.fd.management.backend.dto.BankDetailsRequest;
 import com.fd.management.backend.dto.EmergencyContactDto;
 import com.fd.management.backend.dto.StaffRequest;
 import com.fd.management.backend.entity.EmergencyContact;
@@ -18,7 +19,35 @@ public class StaffService {
 
     private final StaffRepository staffRepository;
 
-    // --- අලුත් Add Staff ලොජික් එක ---
+    public Staff getStaffById(Long id) {
+        return staffRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Staff not found with ID: " + id));
+    }
+
+    @Transactional
+    public Staff updateBankDetails(Long id, BankDetailsRequest request) {
+        Staff staff = getStaffById(id);
+        staff.setBankName(request.getBankName());
+        staff.setBranchName(request.getBranchName());
+        staff.setAccountName(request.getAccountName());
+        staff.setAccountNumber(request.getAccountNumber());
+        return staffRepository.save(staff);
+    }
+
+    @Transactional
+    public Staff addEmergencyContact(Long id, EmergencyContactDto request) {
+        Staff staff = getStaffById(id);
+
+        EmergencyContact contact = new EmergencyContact();
+        contact.setName(request.getName());
+        contact.setRelationship(request.getRelationship());
+        contact.setContactNumber(request.getContactNumber());
+        contact.setStaff(staff); // Staff කෙනාට ලින්ක් කරනවා
+
+        staff.getEmergencyContacts().add(contact);
+        return staffRepository.save(staff);
+    }
+
     @Transactional
     public Staff addStaff(StaffRequest request) {
         Staff staff = new Staff();

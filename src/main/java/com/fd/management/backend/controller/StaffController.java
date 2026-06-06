@@ -1,6 +1,8 @@
 package com.fd.management.backend.controller;
 
 import com.fd.management.backend.dto.StaffRequest;
+import com.fd.management.backend.dto.BankDetailsRequest;
+import com.fd.management.backend.dto.EmergencyContactDto;
 import com.fd.management.backend.entity.Staff;
 import com.fd.management.backend.service.StaffService;
 import lombok.RequiredArgsConstructor;
@@ -38,6 +40,34 @@ public class StaffController {
             return ResponseEntity.ok(staffService.loginByEmail(credentials.get("email")));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<?> getStaffProfile(@PathVariable Long id) {
+        try {
+            return ResponseEntity.ok(staffService.getStaffById(id));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    // දිගට තිබ්බ නම් අයින් කරලා කෙටි කරා
+    @PutMapping("/{id}/bank")
+    public ResponseEntity<?> updateBankDetails(@PathVariable Long id, @RequestBody BankDetailsRequest request) {
+        try {
+            return ResponseEntity.ok(staffService.updateBankDetails(id, request));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Failed to update bank details: " + e.getMessage());
+        }
+    }
+
+    @PostMapping("/{id}/contact")
+    public ResponseEntity<?> addEmergencyContact(@PathVariable Long id, @RequestBody EmergencyContactDto request) {
+        try {
+            return ResponseEntity.ok(staffService.addEmergencyContact(id, request));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Failed to add contact: " + e.getMessage());
         }
     }
 }
