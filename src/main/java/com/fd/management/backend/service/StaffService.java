@@ -22,4 +22,9 @@ public class StaffService {
     public List<Staff> getAllStaff() {
         return staffRepository.findAll();
     }
+
+    public Staff loginByEmail(String email) {
+        return staffRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found with this email!"));
+    }
 }

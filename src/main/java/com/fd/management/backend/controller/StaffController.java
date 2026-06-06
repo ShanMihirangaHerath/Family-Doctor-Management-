@@ -8,6 +8,8 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+import java.util.Map;
+
 @RestController
 @RequestMapping("/api/staff")
 @CrossOrigin(origins = "*")
@@ -25,4 +27,14 @@ public class StaffController {
     public ResponseEntity<List<Staff>> getAllStaff() {
         return ResponseEntity.ok(staffService.getAllStaff());
     }
+
+    @PostMapping("/login")
+    public ResponseEntity<?> login(@RequestBody Map<String, String> credentials) {
+        try {
+            return ResponseEntity.ok(staffService.loginByEmail(credentials.get("email")));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
 }
