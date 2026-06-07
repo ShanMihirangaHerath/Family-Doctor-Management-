@@ -72,6 +72,9 @@ public class Staff {
     @Column(name = "account_number")
     private String accountNumber;
 
+    @Column(name = "fcm_token")
+    private String fcmToken;
+
     // --- Relational Table Mapping (Emergency Contacts) ---
     @OneToMany(mappedBy = "staff", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<EmergencyContact> emergencyContacts = new ArrayList<>();
@@ -80,4 +83,5 @@ public class Staff {
     protected void onCreate() {
         this.createdAt = LocalDateTime.now();
     }
+
 }

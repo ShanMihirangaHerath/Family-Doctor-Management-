@@ -94,4 +94,11 @@ public class StaffService {
         return staffRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found with this email!"));
     }
+
+    @Transactional
+    public void updateFcmToken(Long staffId, String token) {
+        Staff staff = getStaffById(staffId);
+        staff.setFcmToken(token);
+        staffRepository.save(staff);
+    }
 }

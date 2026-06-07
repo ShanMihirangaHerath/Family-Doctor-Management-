@@ -70,4 +70,14 @@ public class StaffController {
             return ResponseEntity.badRequest().body("Failed to add contact: " + e.getMessage());
         }
     }
+
+    @PutMapping("/{id}/fcm-token")
+    public ResponseEntity<?> updateFcmToken(@PathVariable Long id, @RequestBody Map<String, String> request) {
+        try {
+            staffService.updateFcmToken(id, request.get("token"));
+            return ResponseEntity.ok("Token updated successfully");
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Error updating token: " + e.getMessage());
+        }
+    }
 }
