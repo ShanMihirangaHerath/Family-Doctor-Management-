@@ -21,4 +21,16 @@ public class NotificationController {
             return ResponseEntity.badRequest().body("Error: " + e.getMessage());
         }
     }
+
+    // Postman එකෙන් Test කරන්න හදපු API එක
+    @PostMapping("/send")
+    public ResponseEntity<?> sendTestNotification(@RequestBody java.util.Map<String, String> request) {
+        try {
+            Long staffId = Long.parseLong(request.get("staffId"));
+            notificationService.sendNotification(staffId, request.get("title"), request.get("body"));
+            return ResponseEntity.ok("Notification push triggered successfully!");
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Error: " + e.getMessage());
+        }
+    }
 }

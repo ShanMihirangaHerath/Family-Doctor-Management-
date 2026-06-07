@@ -28,19 +28,25 @@ public class NotificationService {
 
         if (staff.getFcmToken() != null && !staff.getFcmToken().isEmpty()) {
             try {
-                Message message = Message.builder()
-                        .setToken(staff.getFcmToken())
-                        .setNotification(com.google.firebase.messaging.Notification.builder()
+                com.google.firebase.messaging.Notification firebaseAuthNotif =
+                        com.google.firebase.messaging.Notification.builder()
                                 .setTitle(title)
                                 .setBody(body)
-                                .build())
+                                .build();
+
+                Message message = Message.builder()
+                        .setToken(staff.getFcmToken())
+                        .setNotification(firebaseAuthNotif)
                         .build();
 
                 String response = FirebaseMessaging.getInstance().send(message);
                 System.out.println("Successfully sent message: " + response);
+
             } catch (Exception e) {
                 System.out.println("Failed to send push notification: " + e.getMessage());
             }
+        } else {
+            System.out.println("Cannot send push notification. FCM Token is missing for staff ID: " + staffId);
         }
     }
 }
