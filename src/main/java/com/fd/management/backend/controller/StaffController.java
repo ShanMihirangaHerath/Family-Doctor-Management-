@@ -1,8 +1,7 @@
 package com.fd.management.backend.controller;
+
 import com.fd.management.backend.config.JwtUtil;
 import com.fd.management.backend.service.CloudinaryService;
-import org.springframework.web.multipart.MultipartFile;
-
 import com.fd.management.backend.dto.StaffRequest;
 import com.fd.management.backend.dto.BankDetailsRequest;
 import com.fd.management.backend.dto.EmergencyContactDto;
@@ -11,6 +10,7 @@ import com.fd.management.backend.service.StaffService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.Map;
@@ -24,6 +24,7 @@ public class StaffController {
     private final JwtUtil jwtUtil;
     private final CloudinaryService cloudinaryService;
 
+    // 🔴 415 Error එක එන්නේ නැති වෙන්න consumes එකයි @ModelAttribute එකයි දාලා තියෙනවා
     @PostMapping(value = "/add", consumes = { "multipart/form-data" })
     public ResponseEntity<?> addStaff(
             @ModelAttribute StaffRequest request,
@@ -37,7 +38,7 @@ public class StaffController {
 
             return ResponseEntity.ok(staffService.addStaff(request, cvUrl));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body("Failed to add staff: " + e.getMessage());
+            return ResponseEntity.badRequest().body(Map.of("message", "Failed to add staff: " + e.getMessage()));
         }
     }
 
@@ -67,24 +68,21 @@ public class StaffController {
         }
     }
 
-
-
     @GetMapping("/{id}")
     public ResponseEntity<?> getStaffProfile(@PathVariable Long id) {
         try {
             return ResponseEntity.ok(staffService.getStaffById(id));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
         }
     }
 
-    // දිගට තිබ්බ නම් අයින් කරලා කෙටි කරා
     @PutMapping("/{id}/bank")
     public ResponseEntity<?> updateBankDetails(@PathVariable Long id, @RequestBody BankDetailsRequest request) {
         try {
             return ResponseEntity.ok(staffService.updateBankDetails(id, request));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body("Failed to update bank details: " + e.getMessage());
+            return ResponseEntity.badRequest().body(Map.of("message", "Failed to update bank details: " + e.getMessage()));
         }
     }
 
@@ -93,7 +91,7 @@ public class StaffController {
         try {
             return ResponseEntity.ok(staffService.addEmergencyContact(id, request));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body("Failed to add contact: " + e.getMessage());
+            return ResponseEntity.badRequest().body(Map.of("message", "Failed to add contact: " + e.getMessage()));
         }
     }
 
@@ -101,9 +99,9 @@ public class StaffController {
     public ResponseEntity<?> updateFcmToken(@PathVariable Long id, @RequestBody Map<String, String> request) {
         try {
             staffService.updateFcmToken(id, request.get("token"));
-            return ResponseEntity.ok("Token updated successfully");
+            return ResponseEntity.ok(Map.of("message", "Token updated successfully"));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body("Error updating token: " + e.getMessage());
+            return ResponseEntity.badRequest().body(Map.of("message", "Error updating token: " + e.getMessage()));
         }
     }
 }
