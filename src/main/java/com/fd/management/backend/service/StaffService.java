@@ -7,6 +7,7 @@ import com.fd.management.backend.entity.EmergencyContact;
 import com.fd.management.backend.entity.Staff;
 import com.fd.management.backend.repository.StaffRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,6 +19,7 @@ import java.util.UUID;
 public class StaffService {
 
     private final StaffRepository staffRepository;
+    private final PasswordEncoder passwordEncoder;
 
     public Staff getStaffById(Long id) {
         return staffRepository.findById(id)
@@ -64,11 +66,20 @@ public class StaffService {
         staff.setWhatsappNo(request.getWhatsappNo());
         staff.setAddress(request.getAddress());
 
+        // 🔴 මෙන්න මේක තමයි අලුතින් ආපු වැදගත්ම කෑල්ල (Password Encryption)
+        if (request.getPassword() != null && !request.getPassword().isEmpty()) {
+            staff.setPassword(passwordEncoder.encode(request.getPassword()));
+        } else {
+            // Frontend එකෙන් පාස්වර්ඩ් එකක් ආවේ නැත්නම් Default Password එකක් දානවා
+            staff.setPassword(passwordEncoder.encode("fdhealth123"));
+        }
+
         staff.setBankName(request.getBankName());
         staff.setBranchName(request.getBranchName());
         staff.setAccountName(request.getAccountName());
         staff.setAccountNumber(request.getAccountNumber());
 
+        // QR Code එක Generate කරන කෑල්ල
         staff.setQrCodeString("FD-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase());
 
         if (request.getEmergencyContacts() != null) {
@@ -90,9 +101,15 @@ public class StaffService {
         return staffRepository.findAll();
     }
 
-    public Staff loginByEmail(String email) {
-        return staffRepository.findByEmail(email)
+    public Staff loginUser(String email, String rawPassword) {
+        Staff staff = staffRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found with this email!"));
+
+        if (!passwordEncoder.matches(rawPassword, staff.getPassword())) {
+            throw new RuntimeException("Invalid password! Please try again.");
+        }
+
+        return staff;
     }
 
     @Transactional

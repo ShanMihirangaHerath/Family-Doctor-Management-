@@ -1,4 +1,5 @@
 package com.fd.management.backend.controller;
+import com.fd.management.backend.config.JwtUtil;
 
 import com.fd.management.backend.dto.StaffRequest;
 import com.fd.management.backend.dto.BankDetailsRequest;
@@ -19,6 +20,7 @@ import java.util.Map;
 public class StaffController {
 
     private final StaffService staffService;
+    private final JwtUtil jwtUtil;
 
     @PostMapping("/add")
     public ResponseEntity<?> addStaff(@RequestBody StaffRequest request) {
@@ -37,11 +39,25 @@ public class StaffController {
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody Map<String, String> credentials) {
         try {
-            return ResponseEntity.ok(staffService.loginByEmail(credentials.get("email")));
+            String email = credentials.get("email");
+            String password = credentials.get("password");
+
+            Staff staff = staffService.loginUser(email, password);
+
+            String token = jwtUtil.generateToken(staff.getEmail(), staff.getRole(), staff.getFullName());
+
+            return ResponseEntity.ok(Map.of(
+                    "token", token,
+                    "role", staff.getRole(),
+                    "name", staff.getFullName()
+            ));
+
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
         }
     }
+
+
 
     @GetMapping("/{id}")
     public ResponseEntity<?> getStaffProfile(@PathVariable Long id) {
