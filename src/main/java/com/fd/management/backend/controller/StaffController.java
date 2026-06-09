@@ -24,11 +24,10 @@ public class StaffController {
     private final JwtUtil jwtUtil;
     private final CloudinaryService cloudinaryService;
 
-    // 🔴 415 Error එක එන්නේ නැති වෙන්න consumes එකයි @ModelAttribute එකයි දාලා තියෙනවා
     @PostMapping(value = "/add", consumes = { "multipart/form-data" })
     public ResponseEntity<?> addStaff(
-            @ModelAttribute StaffRequest request,
-            @RequestParam(value = "file", required = false) MultipartFile file) {
+            @RequestPart("data") StaffRequest request,
+            @RequestPart(value = "file", required = false) MultipartFile file) {
         try {
             String cvUrl = null;
 
