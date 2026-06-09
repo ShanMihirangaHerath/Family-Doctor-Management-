@@ -1,5 +1,5 @@
 package com.fd.management.backend.controller;
-
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fd.management.backend.config.JwtUtil;
 import com.fd.management.backend.service.CloudinaryService;
 import com.fd.management.backend.dto.StaffRequest;
@@ -26,11 +26,13 @@ public class StaffController {
 
     @PostMapping(value = "/add", consumes = { "multipart/form-data" })
     public ResponseEntity<?> addStaff(
-            @RequestPart("data") StaffRequest request,
-            @RequestPart(value = "file", required = false) MultipartFile file) {
+            @RequestParam("data") String data,
+            @RequestParam(value = "file", required = false) MultipartFile file) {
         try {
-            String cvUrl = null;
+            ObjectMapper mapper = new ObjectMapper();
+            StaffRequest request = mapper.readValue(data, StaffRequest.class);
 
+            String cvUrl = null;
             if (file != null && !file.isEmpty()) {
                 cvUrl = cloudinaryService.uploadFile(file);
             }
