@@ -26,20 +26,24 @@ public class StaffController {
 
     @PostMapping(value = "/add", consumes = { "multipart/form-data" })
     public ResponseEntity<?> addStaff(
-            @RequestParam("data") String data,
+            @ModelAttribute StaffRequest request,
             @RequestParam(value = "file", required = false) MultipartFile file) {
         try {
-            ObjectMapper mapper = new ObjectMapper();
-            StaffRequest request = mapper.readValue(data, StaffRequest.class);
-
+            System.out.println("==== Adding: " + request.getEmail() + " ====");
             String cvUrl = null;
+
             if (file != null && !file.isEmpty()) {
                 cvUrl = cloudinaryService.uploadFile(file);
             }
 
-            return ResponseEntity.ok(staffService.addStaff(request, cvUrl));
+            Staff savedStaff = staffService.addStaff(request, cvUrl);
+            System.out.println("==== Done! ====");
+
+            return ResponseEntity.ok(savedStaff);
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("message", "Failed to add staff: " + e.getMessage()));
+            System.out.println("==== Error:  ====");
+            e.printStackTrace(); 
+            return ResponseEntity.badRequest().body(Map.of("message", "Failed: " + e.getMessage()));
         }
     }
 
