@@ -77,6 +77,9 @@ public class Staff {
     @Column(name = "fcm_token")
     private String fcmToken;
 
+    @Column(name = "cv_url")
+    private String cvUrl;
+
     // --- Relational Table Mapping (Emergency Contacts) ---
     @OneToMany(mappedBy = "staff", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<EmergencyContact> emergencyContacts = new ArrayList<>();

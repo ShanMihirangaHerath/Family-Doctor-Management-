@@ -1,5 +1,7 @@
 package com.fd.management.backend.controller;
 import com.fd.management.backend.config.JwtUtil;
+import com.fd.management.backend.service.CloudinaryService;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.fd.management.backend.dto.StaffRequest;
 import com.fd.management.backend.dto.BankDetailsRequest;
@@ -20,11 +22,20 @@ public class StaffController {
 
     private final StaffService staffService;
     private final JwtUtil jwtUtil;
+    private final CloudinaryService cloudinaryService;
 
-    @PostMapping("/add")
-    public ResponseEntity<?> addStaff(@RequestBody StaffRequest request) {
+    @PostMapping(value = "/add", consumes = { "multipart/form-data" })
+    public ResponseEntity<?> addStaff(
+            @ModelAttribute StaffRequest request,
+            @RequestParam(value = "file", required = false) MultipartFile file) {
         try {
-            return ResponseEntity.ok(staffService.addStaff(request));
+            String cvUrl = null;
+
+            if (file != null && !file.isEmpty()) {
+                cvUrl = cloudinaryService.uploadFile(file);
+            }
+
+            return ResponseEntity.ok(staffService.addStaff(request, cvUrl));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body("Failed to add staff: " + e.getMessage());
         }

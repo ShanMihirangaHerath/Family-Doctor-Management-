@@ -51,7 +51,7 @@ public class StaffService {
     }
 
     @Transactional
-    public Staff addStaff(StaffRequest request) {
+    public Staff addStaff(StaffRequest request, String cvUrl) {
         Staff staff = new Staff();
 
         staff.setFullName(request.getFirstName() + " " + request.getLastName());
@@ -65,6 +65,7 @@ public class StaffService {
         staff.setMobileNo(request.getMobileNo());
         staff.setWhatsappNo(request.getWhatsappNo());
         staff.setAddress(request.getAddress());
+        staff.setCvUrl(cvUrl);
 
         // 🔴 මෙන්න මේක තමයි අලුතින් ආපු වැදගත්ම කෑල්ල (Password Encryption)
         if (request.getPassword() != null && !request.getPassword().isEmpty()) {
