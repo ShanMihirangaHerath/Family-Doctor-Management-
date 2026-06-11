@@ -59,7 +59,8 @@ public class StaffController {
             return ResponseEntity.ok(Map.of(
                     "token", token,
                     "role", staff.getRole(),
-                    "name", staff.getFullName()
+                    "name", staff.getFullName(),
+                    "id", staff.getId()
             ));
 
         } catch (Exception e) {
