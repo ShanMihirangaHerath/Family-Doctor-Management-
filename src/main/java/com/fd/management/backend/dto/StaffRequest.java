@@ -5,25 +5,20 @@ import java.util.List;
 
 @Data
 public class StaffRequest {
-    // Basic & Bio Data
+    private String email;
+    private String password;
     private String firstName;
     private String middleName;
     private String lastName;
-    private String email;
-    private String password;
-    private String phone;
-    private String role;
     private String nic;
+    private String phone;
     private String mobileNo;
     private String whatsappNo;
     private String address;
-
-    // Bank Details
     private String bankName;
     private String branchName;
     private String accountName;
     private String accountNumber;
-
-    // Emergency Contacts List
+    private String role;
     private List<EmergencyContactDto> emergencyContacts;
 }

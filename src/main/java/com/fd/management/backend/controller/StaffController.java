@@ -24,18 +24,13 @@ public class StaffController {
     private final JwtUtil jwtUtil;
     private final CloudinaryService cloudinaryService;
 
-    @PostMapping("/add")
+    @PostMapping(value = "/add", consumes = "application/json")
     public ResponseEntity<?> addStaff(@RequestBody StaffRequest request) {
         try {
             System.out.println("==== Adding: " + request.getEmail() + " ====");
-
-            // CV එක පස්සේ අප්ඩේට් කරන නිසා මෙතනදි null පාස් කරනවා
             Staff savedStaff = staffService.addStaff(request, null);
-
-            System.out.println("==== Done! ====");
             return ResponseEntity.ok(savedStaff);
         } catch (Exception e) {
-            System.out.println("==== Error:  ====");
             e.printStackTrace();
             return ResponseEntity.badRequest().body(Map.of("message", "Failed: " + e.getMessage()));
         }
