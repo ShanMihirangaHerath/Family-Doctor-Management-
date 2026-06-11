@@ -8,7 +8,6 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/office")
-@CrossOrigin(origins = "*")
 @RequiredArgsConstructor
 public class OfficeLocationController {
 
