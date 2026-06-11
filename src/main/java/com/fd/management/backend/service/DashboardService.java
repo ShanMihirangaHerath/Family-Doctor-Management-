@@ -10,6 +10,7 @@ import com.fd.management.backend.repository.OfficeLocationRepository;
 import com.fd.management.backend.repository.StaffRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -25,14 +26,18 @@ public class DashboardService {
     private final LeaveRequestRepository leaveRepository;
     private final OfficeLocationRepository officeLocationRepository;
 
+    // 🔴 මේක අනිවාර්යයි (Lazy loading Error එක එන එක නවත්තන්න)
+    @Transactional(readOnly = true)
     public DashboardStatsDto getDashboardStats() {
         DashboardStatsDto stats = new DashboardStatsDto();
         LocalDate today = LocalDate.now();
 
+        // 1. Total Staff & Role Distribution
         List<Staff> allStaff = staffRepository.findAll();
         stats.setTotalStaff(allStaff.size());
 
         Map<String, Long> roleCounts = allStaff.stream()
+                .filter(s -> s.getRole() != null) // 🔴 Null check
                 .collect(Collectors.groupingBy(Staff::getRole, Collectors.counting()));
 
         List<Map<String, Object>> roleDist = new ArrayList<>();
@@ -47,7 +52,7 @@ public class DashboardService {
         // 3. Present Today
         List<Attendance> allAttendances = attendanceRepository.findAll();
         long presentToday = allAttendances.stream()
-                .filter(a -> a.getCheckInTime().toLocalDate().equals(today))
+                .filter(a -> a.getCheckInTime() != null && a.getCheckInTime().toLocalDate().equals(today)) // 🔴 Null check
                 .map(a -> a.getStaff().getId())
                 .distinct()
                 .count();
@@ -56,7 +61,8 @@ public class DashboardService {
         // 4. On Leave Today
         List<LeaveRequest> allLeaves = leaveRepository.findAll();
         long onLeaveToday = allLeaves.stream()
-                .filter(l -> "APPROVED".equals(l.getStatus()) &&
+                .filter(l -> l.getStartDate() != null && l.getEndDate() != null && // 🔴 Null check
+                        "APPROVED".equals(l.getStatus()) &&
                         !today.isBefore(l.getStartDate()) &&
                         !today.isAfter(l.getEndDate()))
                 .map(l -> l.getStaff().getId())
@@ -71,13 +77,14 @@ public class DashboardService {
         for (int i = 6; i >= 0; i--) {
             LocalDate date = today.minusDays(i);
             long present = allAttendances.stream()
-                    .filter(a -> a.getCheckInTime().toLocalDate().equals(date))
+                    .filter(a -> a.getCheckInTime() != null && a.getCheckInTime().toLocalDate().equals(date))
                     .map(a -> a.getStaff().getId())
                     .distinct()
                     .count();
 
             long onLeave = allLeaves.stream()
-                    .filter(l -> "APPROVED".equals(l.getStatus()) &&
+                    .filter(l -> l.getStartDate() != null && l.getEndDate() != null &&
+                            "APPROVED".equals(l.getStatus()) &&
                             !date.isBefore(l.getStartDate()) &&
                             !date.isAfter(l.getEndDate()))
                     .map(l -> l.getStaff().getId())
