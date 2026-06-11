@@ -40,7 +40,7 @@ public class StaffController {
             return ResponseEntity.badRequest().body(Map.of("message", "Failed: " + e.getMessage()));
         }
     }
-    
+
     @GetMapping("/all")
     public ResponseEntity<List<Staff>> getAllStaff() {
         return ResponseEntity.ok(staffService.getAllStaff());
