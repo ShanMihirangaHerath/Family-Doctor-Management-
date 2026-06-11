@@ -104,4 +104,16 @@ public class StaffController {
             return ResponseEntity.badRequest().body(Map.of("message", "Error updating token: " + e.getMessage()));
         }
     }
+
+    // --- Frontend එකෙන් එන Update Request එක අල්ලගන්න API එක ---
+    @PutMapping("/update/{id}")
+    public ResponseEntity<?> updateStaff(@PathVariable Long id, @RequestBody StaffRequest request) {
+        try {
+            Staff updatedStaff = staffService.updateStaff(id, request);
+            return ResponseEntity.ok(updatedStaff);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.badRequest().body(Map.of("message", "Failed to update staff: " + e.getMessage()));
+        }
+    }
 }

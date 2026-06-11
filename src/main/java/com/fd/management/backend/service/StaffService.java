@@ -119,4 +119,36 @@ public class StaffService {
         staff.setFcmToken(token);
         staffRepository.save(staff);
     }
+
+    // --- පවතින Staff කෙනෙක්ගේ විස්තර Update කිරීම ---
+    @Transactional
+    public Staff updateStaff(Long id, StaffRequest request) {
+        // 1. ඉන්න කෙනාව හොයාගන්නවා
+        Staff staff = getStaffById(id);
+
+        // 2. අලුත් විස්තර ටික තියෙනවා නම් ඒක Update කරනවා
+        if (request.getFirstName() != null) staff.setFirstName(request.getFirstName());
+        if (request.getMiddleName() != null) staff.setMiddleName(request.getMiddleName());
+        if (request.getLastName() != null) staff.setLastName(request.getLastName());
+
+        // Full Name එකත් අලුතින් හදලා සේව් කරනවා
+        staff.setFullName(staff.getFirstName() + " " + (staff.getLastName() != null ? staff.getLastName() : ""));
+
+        if (request.getEmail() != null) staff.setEmail(request.getEmail());
+        if (request.getPhone() != null) staff.setPhone(request.getPhone());
+        if (request.getRole() != null) staff.setRole(request.getRole());
+        if (request.getNic() != null) staff.setNic(request.getNic());
+        if (request.getMobileNo() != null) staff.setMobileNo(request.getMobileNo());
+        if (request.getWhatsappNo() != null) staff.setWhatsappNo(request.getWhatsappNo());
+        if (request.getAddress() != null) staff.setAddress(request.getAddress());
+
+        // Bank Details ටික Update කරනවා
+        if (request.getBankName() != null) staff.setBankName(request.getBankName());
+        if (request.getBranchName() != null) staff.setBranchName(request.getBranchName());
+        if (request.getAccountName() != null) staff.setAccountName(request.getAccountName());
+        if (request.getAccountNumber() != null) staff.setAccountNumber(request.getAccountNumber());
+
+        // 3. Database එකට Save කරනවා
+        return staffRepository.save(staff);
+    }
 }
