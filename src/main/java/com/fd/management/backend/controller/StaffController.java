@@ -24,29 +24,23 @@ public class StaffController {
     private final JwtUtil jwtUtil;
     private final CloudinaryService cloudinaryService;
 
-    @PostMapping(value = "/add", consumes = { "multipart/form-data" })
-    public ResponseEntity<?> addStaff(
-            @ModelAttribute StaffRequest request,
-            @RequestParam(value = "file", required = false) MultipartFile file) {
+    @PostMapping("/add")
+    public ResponseEntity<?> addStaff(@RequestBody StaffRequest request) {
         try {
             System.out.println("==== Adding: " + request.getEmail() + " ====");
-            String cvUrl = null;
 
-            if (file != null && !file.isEmpty()) {
-                cvUrl = cloudinaryService.uploadFile(file);
-            }
+            // CV එක පස්සේ අප්ඩේට් කරන නිසා මෙතනදි null පාස් කරනවා
+            Staff savedStaff = staffService.addStaff(request, null);
 
-            Staff savedStaff = staffService.addStaff(request, cvUrl);
             System.out.println("==== Done! ====");
-
             return ResponseEntity.ok(savedStaff);
         } catch (Exception e) {
             System.out.println("==== Error:  ====");
-            e.printStackTrace(); 
+            e.printStackTrace();
             return ResponseEntity.badRequest().body(Map.of("message", "Failed: " + e.getMessage()));
         }
     }
-
+    
     @GetMapping("/all")
     public ResponseEntity<List<Staff>> getAllStaff() {
         return ResponseEntity.ok(staffService.getAllStaff());
