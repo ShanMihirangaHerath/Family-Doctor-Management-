@@ -436,7 +436,7 @@ app.get('/api/location/history/:staffId', async (req, res) => {
 });
 
 // ==========================================
-// 25. ADMIN SIDE: SEND FIREBASE PUSH NOTIFICATIONS
+// 22. ADMIN SIDE: SEND FIREBASE PUSH NOTIFICATIONS
 // ==========================================
 app.post('/api/notifications/send', async (req, res) => {
     try {
@@ -489,7 +489,7 @@ app.post('/api/notifications/send', async (req, res) => {
 });
 
 // ==========================================
-// 26. STAFF SIDE: GET REAL NOTIFICATIONS (OVERWRITE OLD ONE)
+// 23. STAFF SIDE: GET REAL NOTIFICATIONS (OVERWRITE OLD ONE)
 // ==========================================
 app.get('/api/notifications/:staffId', async (req, res) => {
     try {
@@ -498,6 +498,39 @@ app.get('/api/notifications/:staffId', async (req, res) => {
         const [rows] = await pool.query(query, [req.params.staffId]);
         return res.json(rows);
     } catch (error) {
+        return res.status(500).json({ message: error.message });
+    }
+});
+
+// ==========================================
+// 24. ADMIN DASHBOARD STATS
+// ==========================================
+app.get('/api/dashboard/stats', async (req, res) => {
+    try {
+        // 1. Total Staff
+        const [staff] = await pool.query('SELECT COUNT(*) as count FROM staff_members');
+        const totalStaff = staff[0].count;
+
+        // 2. Active Branches (office_locations theke)
+        const [branches] = await pool.query('SELECT COUNT(*) as count FROM office_locations');
+        const activeBranches = branches[0].count;
+
+        // 3. Present Today (Ajke koto jon check-in koreche)
+        const [present] = await pool.query('SELECT COUNT(DISTINCT staff_id) as count FROM attendance_records WHERE DATE(check_in_time) = CURDATE()');
+        const presentToday = present[0].count;
+
+        // 4. On Leave Today (Ajke koto jon chutite ache)
+        const [leave] = await pool.query("SELECT COUNT(DISTINCT staff_id) as count FROM leave_requests WHERE CURDATE() BETWEEN start_date AND end_date AND status = 'APPROVED'");
+        const onLeaveToday = leave[0].count;
+
+        return res.json({
+            totalStaff: totalStaff || 0,
+            activeBranches: activeBranches || 0,
+            presentToday: presentToday || 0,
+            onLeaveToday: onLeaveToday || 0
+        });
+    } catch (error) {
+        console.error("Dashboard Error: ", error);
         return res.status(500).json({ message: error.message });
     }
 });
