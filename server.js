@@ -42,7 +42,9 @@ app.post('/api/staff/login', async (req, res) => {
     }
 });
 
-// 2. ADD STAFF ENDPOINT
+// ==========================================
+// 2. ADD STAFF ENDPOINT (WITH CV URL)
+// ==========================================
 app.post('/api/staff/add', async (req, res) => {
     try {
         const data = req.body;
@@ -50,23 +52,52 @@ app.post('/api/staff/add', async (req, res) => {
         const rawPassword = data.password || "fdhealth123";
         const hashedPassword = await bcrypt.hash(rawPassword, 10);
         const qrCode = "FD-" + crypto.randomUUID().substring(0, 8).toUpperCase();
+        const cvUrl = data.cvUrl || null; // 🔴 CV URL එක ගන්නවා
 
-        const query = `INSERT INTO staff_members (email, password, full_name, first_name, middle_name, last_name, nic, phone, mobile_no, whatsapp_no, address, bank_name, branch_name, account_name, account_number, role, qr_code_string, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())`;
-        const [result] = await pool.query(query, [data.email, hashedPassword, fullName, data.firstName, data.middleName, data.lastName, data.nic, data.phone, data.mobileNo, data.whatsappNo, data.address, data.bankName, data.branchName, data.accountName, data.accountNumber, data.role || 'STAFF', qrCode]);
+        const query = `
+            INSERT INTO staff_members (
+                email, password, full_name, first_name, middle_name, last_name, 
+                nic, phone, mobile_no, whatsapp_no, address, bank_name, branch_name, 
+                account_name, account_number, role, qr_code_string, cv_url, created_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())`;
+        
+        const values = [
+            data.email, hashedPassword, fullName, data.firstName, data.middleName, data.lastName, 
+            data.nic, data.phone, data.mobileNo, data.whatsappNo, data.address, data.bankName, 
+            data.branchName, data.accountName, data.accountNumber, data.role || 'STAFF', qrCode, cvUrl
+        ];
 
+        const [result] = await pool.query(query, values);
         return res.json({ id: result.insertId, message: "Staff registered successfully!" });
     } catch (error) {
         return res.status(400).json({ message: error.message });
     }
 });
 
-// 3. UPDATE STAFF ENDPOINT
+// ==========================================
+// 3. UPDATE STAFF ENDPOINT (WITH CV URL)
+// ==========================================
 app.put('/api/staff/update/:id', async (req, res) => {
     try {
         const data = req.body;
         const fullName = `${data.firstName || ''} ${data.lastName || ''}`.trim();
-        const query = `UPDATE staff_members SET email=?, full_name=?, first_name=?, middle_name=?, last_name=?, nic=?, phone=?, mobile_no=?, whatsapp_no=?, address=?, bank_name=?, branch_name=?, account_name=?, account_number=?, role=? WHERE id=?`;
-        await pool.query(query, [data.email, fullName, data.firstName, data.middleName, data.lastName, data.nic, data.phone, data.mobileNo, data.whatsappNo, data.address, data.bankName, data.branchName, data.accountName, data.accountNumber, data.role, req.params.id]);
+        const cvUrl = data.cvUrl || null; // 🔴 CV URL එක ගන්නවා
+
+        const query = `
+            UPDATE staff_members SET 
+                email=?, full_name=?, first_name=?, middle_name=?, last_name=?, 
+                nic=?, phone=?, mobile_no=?, whatsapp_no=?, address=?, bank_name=?, 
+                branch_name=?, account_name=?, account_number=?, role=?, cv_url=? 
+            WHERE id=?`;
+        
+        const values = [
+            data.email, fullName, data.firstName, data.middleName, data.lastName, 
+            data.nic, data.phone, data.mobileNo, data.whatsappNo, data.address, 
+            data.bankName, data.branchName, data.accountName, data.accountNumber, 
+            data.role, cvUrl, req.params.id
+        ];
+
+        await pool.query(query, values);
         return res.json({ message: "Profile updated successfully!" });
     } catch (error) {
         return res.status(400).json({ message: error.message });
@@ -274,7 +305,67 @@ app.put('/api/attendance/admin/status/:id', async (req, res) => {
         return res.status(400).json({ message: error.message });
     }
 });
+// ==========================================
+// 14. GET ALL LEAVE REQUESTS FOR ADMIN 
+// ==========================================
+app.get('/api/leave/admin/all', async (req, res) => {
+    try {
+        const query = `
+            SELECT l.*, s.full_name as staffName, s.role as staffRole 
+            FROM leave_requests l 
+            JOIN staff_members s ON l.staff_id = s.id
+            ORDER BY FIELD(l.status, 'PENDING', 'APPROVED', 'REJECTED'), l.applied_on DESC
+        `;
+        const [rows] = await pool.query(query);
+        return res.json(rows);
+    } catch (error) {
+        return res.status(500).json({ message: error.message });
+    }
+});
 
+// ==========================================
+// 15. APPROVE / REJECT LEAVE REQUEST (ADMIN)
+// ==========================================
+app.put('/api/leave/admin/status/:id', async (req, res) => {
+    try {
+        await pool.query('UPDATE leave_requests SET status = ? WHERE id = ?', [req.body.status, req.params.id]);
+        return res.json({ message: `Leave application status updated!` });
+    } catch (error) {
+        return res.status(400).json({ message: error.message });
+    }
+});
+
+// ==========================================
+// 17. STAFF SIDE: APPLY LEAVE APPLICATION
+// ==========================================
+app.post('/api/leave/apply/:staffId', async (req, res) => {
+    try {
+        const query = `
+            INSERT INTO leave_requests (staff_id, start_date, end_date, reason, status, applied_on)
+            VALUES (?, ?, ?, ?, 'PENDING', NOW())
+        `;
+        await pool.query(query, [req.params.staffId, req.body.startDate, req.body.endDate, req.body.reason]);
+        return res.json({ message: "Leave application submitted successfully!" });
+    } catch (error) {
+        return res.status(400).json({ message: error.message });
+    }
+});
+
+// ==========================================
+// 18. STAFF SIDE: GET LEAVE HISTORY
+// ==========================================
+app.get('/api/leave/history/:staffId', async (req, res) => {
+    try {
+        const query = `
+            SELECT id, start_date as startDate, end_date as endDate, reason, status 
+            FROM leave_requests WHERE staff_id = ? ORDER BY applied_on DESC
+        `;
+        const [rows] = await pool.query(query, [req.params.staffId]);
+        return res.json(rows);
+    } catch (error) {
+        return res.status(500).json({ message: error.message });
+    }
+});
 
 const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => console.log(`🚀 Node.js Backend running on port ${PORT}`));
