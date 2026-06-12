@@ -5,16 +5,19 @@ const jwt = require('jsonwebtoken');
 const cors = require('cors');
 const crypto = require('crypto');
 require('dotenv').config();
-const admin = require("firebase-admin");
+
+// 🔴 අලුත්ම Firebase Admin v12+ එකට ගැලපෙන විදිහට Import කිරීම
+const { initializeApp, cert } = require('firebase-admin/app');
+const { getMessaging } = require('firebase-admin/messaging');
 
 try {
     const serviceAccount = require("./serviceAccountKey.json");
-    admin.initializeApp({
-      credential: admin.credential.cert(serviceAccount)
+    initializeApp({
+        credential: cert(serviceAccount)
     });
     console.log("🔥 Firebase Admin initialized successfully!");
 } catch (error) {
-    console.error("⚠️ Firebase initialization failed: serviceAccountKey.json is missing or invalid!");
+    console.error("⚠️ Firebase initialization failed:", error.message);
 }
 
 const app = express();
@@ -439,7 +442,6 @@ app.get('/api/location/history/:staffId', async (req, res) => {
         return res.status(500).json({ message: error.message });
     }
 });
-
 // ==========================================
 // 22. ADMIN SIDE: SEND FIREBASE PUSH NOTIFICATIONS
 // ==========================================
@@ -448,41 +450,40 @@ app.post('/api/notifications/send', async (req, res) => {
         const { targetStaffId, title, message } = req.body;
 
         if (targetStaffId === 'ALL') {
-            // 1. Bulk Messaging: ඔක්කොටම යවනවා
+            // Bulk Messaging
             const [staff] = await pool.query('SELECT id, fcm_token FROM staff_members');
             if(staff.length === 0) return res.status(400).json({message: "No staff members found!"});
             
-            // ඩේටාබේස් එකට සේව් කරන කෑල්ල
             const values = staff.map(s => [s.id, title, message]);
             await pool.query('INSERT INTO notifications (staff_id, title, message) VALUES ?', [values]);
             
-            // 🔴 Firebase එකෙන් FCM Tokens තියෙන අයට Push Notification එක යවනවා
+            // 🔴 අලුත් getMessaging() ක්‍රමය 
             const tokens = staff.filter(s => s.fcm_token).map(s => s.fcm_token);
             if (tokens.length > 0) {
                 const payload = {
                     notification: { title: title, body: message },
-                    tokens: tokens // Array එකක් විදියට Tokens ටික දෙනවා
+                    tokens: tokens 
                 };
-                await admin.messaging().sendEachForMulticast(payload);
+                await getMessaging().sendEachForMulticast(payload);
             }
             
             return res.json({ message: "Bulk notification sent via Firebase!" });
 
         } else {
-            // 2. Single Messaging: තෝරාගත් කෙනාට විතරක් යවනවා
+            // Single Messaging
             await pool.query(
                 'INSERT INTO notifications (staff_id, title, message) VALUES (?, ?, ?)', 
                 [targetStaffId, title, message]
             );
 
-            // 🔴 තෝරාගත් කෙනාගේ FCM Token එක අරන් Firebase Push Notification එක යවනවා
             const [staffRows] = await pool.query('SELECT fcm_token FROM staff_members WHERE id = ?', [targetStaffId]);
             if (staffRows.length > 0 && staffRows[0].fcm_token) {
                 const payload = {
                     notification: { title: title, body: message },
                     token: staffRows[0].fcm_token
                 };
-                await admin.messaging().send(payload);
+                // 🔴 අලුත් getMessaging() ක්‍රමය
+                await getMessaging().send(payload);
             }
 
             return res.json({ message: "Push Notification sent successfully!" });
