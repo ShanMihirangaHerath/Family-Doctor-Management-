@@ -367,5 +367,24 @@ app.get('/api/leave/history/:staffId', async (req, res) => {
     }
 });
 
+// ==========================================
+// 19. ADMIN SIDE: GET ALL LIVE LOCATIONS
+// ==========================================
+app.get('/api/location/all', async (req, res) => {
+    try {
+        // ලොකේෂන් එකක් තියෙන (Update වෙච්ච) අය විතරක් ගන්නවා
+        const query = `
+            SELECT id, full_name as staffName, role as staffRole, 
+                   assigned_latitude as latitude, assigned_longitude as longitude
+            FROM staff_members
+            WHERE assigned_latitude IS NOT NULL AND assigned_longitude IS NOT NULL
+        `;
+        const [rows] = await pool.query(query);
+        return res.json(rows);
+    } catch (error) {
+        return res.status(500).json({ message: error.message });
+    }
+});
+
 const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => console.log(`🚀 Node.js Backend running on port ${PORT}`));
