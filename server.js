@@ -6,16 +6,21 @@ const cors = require('cors');
 const crypto = require('crypto');
 require('dotenv').config();
 const admin = require("firebase-admin");
-const serviceAccount = require("./serviceAccountKey.json");
 
-admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount)
-});
+try {
+    const serviceAccount = require("./serviceAccountKey.json");
+    admin.initializeApp({
+      credential: admin.credential.cert(serviceAccount)
+    });
+    console.log("🔥 Firebase Admin initialized successfully!");
+} catch (error) {
+    console.error("⚠️ Firebase initialization failed: serviceAccountKey.json is missing or invalid!");
+}
 
 const app = express();
 
 app.use(cors());
-app.use(express.json()); // 🔴 ඕනෑම JSON එකක් බාරගන්නවා (No more 415!)
+app.use(express.json());
 
 // Database Connection Pool
 const pool = mysql.createPool({
