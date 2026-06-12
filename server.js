@@ -386,5 +386,47 @@ app.get('/api/location/all', async (req, res) => {
     }
 });
 
+// ==========================================
+// 20. LIVE LOCATION TRACKING RECEIVER (10s Interval) - UPDATE KELA
+// ==========================================
+app.post('/api/location/update/:staffId', async (req, res) => {
+    try {
+        const staffId = req.params.staffId;
+        const { latitude, longitude } = req.body;
+
+        // 1. Current location staff table madhe update kara
+        const updateQuery = `UPDATE staff_members SET assigned_latitude = ?, assigned_longitude = ? WHERE id = ?`;
+        await pool.query(updateQuery, [latitude, longitude, staffId]);
+
+        // 2. 🔴 Navin code: Location history save kara (Path draw karaylasathi)
+        const historyQuery = `INSERT INTO location_history (staff_id, latitude, longitude, recorded_at) VALUES (?, ?, ?, NOW())`;
+        await pool.query(historyQuery, [staffId, latitude, longitude]);
+
+        return res.json({ message: "Live coordinates synced and history saved!" });
+    } catch (error) {
+        return res.status(400).json({ message: error.message });
+    }
+});
+
+// ==========================================
+// 21. ADMIN SIDE: GET STAFF LOCATION HISTORY (ROUTE/PATH) BY DATE
+// ==========================================
+app.get('/api/location/history/:staffId', async (req, res) => {
+    try {
+        const staffId = req.params.staffId;
+        const { date } = req.query; // YYYY-MM-DD format
+
+        const query = `
+            SELECT latitude, longitude, recorded_at 
+            FROM location_history 
+            WHERE staff_id = ? AND DATE(recorded_at) = ?
+            ORDER BY recorded_at ASC
+        `;
+        const [rows] = await pool.query(query, [staffId, date]);
+        return res.json(rows);
+    } catch (error) {
+        return res.status(500).json({ message: error.message });
+    }
+});
 const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => console.log(`🚀 Node.js Backend running on port ${PORT}`));
