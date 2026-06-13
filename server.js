@@ -128,12 +128,31 @@ app.get('/api/staff/all', async (req, res) => {
     }
 });
 
-// 5. GET SINGLE STAFF PROFILE
+// 5. GET SINGLE STAFF PROFILE (UPDATED: With Emergency Contacts & CamelCase mapping)
 app.get('/api/staff/:id', async (req, res) => {
     try {
-        const [rows] = await pool.query('SELECT * FROM staff_members WHERE id = ?', [req.params.id]);
-        if (rows.length === 0) return res.status(404).json({ message: "Not found" });
-        return res.json(rows[0]);
+        const [staffRows] = await pool.query('SELECT * FROM staff_members WHERE id = ?', [req.params.id]);
+        if (staffRows.length === 0) return res.status(404).json({ message: "Not found" });
+        
+        const staff = staffRows[0];
+        
+        // අදාළ Staff මෙම්බර්ගේ Emergency Contacts ටිකත් ගන්නවා
+        const [contactRows] = await pool.query('SELECT name, relationship, contact_number as contactNumber FROM emergency_contacts WHERE staff_id = ?', [req.params.id]);
+        
+        // Flutter ඇප් එක බලාපොරොත්තු වෙන විදිහටම (CamelCase) Data ටික යවනවා
+        return res.json({
+            fullName: staff.full_name,
+            role: staff.role,
+            email: staff.email,
+            phone: staff.phone,
+            nic: staff.nic,
+            address: staff.address,
+            bankName: staff.bank_name,
+            branchName: staff.branch_name,
+            accountName: staff.account_name,
+            accountNumber: staff.account_number,
+            emergencyContacts: contactRows 
+        });
     } catch (error) {
         return res.status(500).json({ message: error.message });
     }
@@ -554,6 +573,34 @@ app.get('/api/attendance/history/:staffId', async (req, res) => {
         `;
         const [rows] = await pool.query(query, [req.params.staffId]);
         return res.json(rows);
+    } catch (error) {
+        return res.status(500).json({ message: error.message });
+    }
+});
+
+// ==========================================
+// 26. STAFF SIDE: UPDATE BANK DETAILS
+// ==========================================
+app.put('/api/staff/:id/bank', async (req, res) => {
+    try {
+        const { bankName, branchName, accountName, accountNumber } = req.body;
+        const query = `UPDATE staff_members SET bank_name=?, branch_name=?, account_name=?, account_number=? WHERE id=?`;
+        await pool.query(query, [bankName, branchName, accountName, accountNumber, req.params.id]);
+        return res.json({ message: "Bank details updated successfully!" });
+    } catch (error) {
+        return res.status(500).json({ message: error.message });
+    }
+});
+
+// ==========================================
+// 27. STAFF SIDE: ADD EMERGENCY CONTACT
+// ==========================================
+app.post('/api/staff/:id/contact', async (req, res) => {
+    try {
+        const { name, relationship, contactNumber } = req.body;
+        const query = `INSERT INTO emergency_contacts (staff_id, name, relationship, contact_number) VALUES (?, ?, ?, ?)`;
+        await pool.query(query, [req.params.id, name, relationship, contactNumber]);
+        return res.json({ message: "Emergency contact added!" });
     } catch (error) {
         return res.status(500).json({ message: error.message });
     }
