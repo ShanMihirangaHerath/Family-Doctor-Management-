@@ -541,5 +541,23 @@ app.get('/api/dashboard/stats', async (req, res) => {
     }
 });
 
+// ==========================================
+// 25. STAFF SIDE: GET ATTENDANCE HISTORY
+// ==========================================
+app.get('/api/attendance/history/:staffId', async (req, res) => {
+    try {
+        const query = `
+            SELECT check_in_time as checkInTime, check_out_time as checkOutTime 
+            FROM attendance_records 
+            WHERE staff_id = ? 
+            ORDER BY check_in_time DESC
+        `;
+        const [rows] = await pool.query(query, [req.params.staffId]);
+        return res.json(rows);
+    } catch (error) {
+        return res.status(500).json({ message: error.message });
+    }
+});
+
 const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => console.log(`🚀 Node.js Backend running on port ${PORT}`));
